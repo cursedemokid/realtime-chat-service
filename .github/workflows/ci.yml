@@ -1,0 +1,41 @@
+name: Build and integration checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: chat_tests
+          POSTGRES_USER: demo
+          POSTGRES_PASSWORD: ci-test-only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U demo -d chat_tests"
+          --health-interval 3s --health-timeout 3s --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Build and test with PostgreSQL
+        env:
+          CHAT_DB_TEST: Host=localhost;Database=chat_tests;Username=demo;Password=ci-test-only
+        run: dotnet test RealtimeChat.sln -c Release
+      - name: Start the complete stack
+        run: docker compose up --build -d
+      - name: SignalR and attachment checks
+        run: node scripts/smoke.mjs
+      - name: Diagnostics
+        if: failure()
+        run: docker compose logs --no-color --tail 150
+      - name: Stop containers
+        if: always()
+        run: docker compose down -v

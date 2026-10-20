@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: chat
+      POSTGRES_USER: ${POSTGRES_USER:-demo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-portfolio-local-only}
+    volumes: [chat-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d chat']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  rabbitmq:
+    image: rabbitmq:4-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-demo}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-portfolio-local-only}
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  chat:
+    build: .
+    ports: ["127.0.0.1:8030:8080"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__ChatDb: Host=postgres;Database=chat;Username=${POSTGRES_USER:-demo};Password=${POSTGRES_PASSWORD:-portfolio-local-only}
+      JwtOptions__SecretKey: ${JWT_SECRET:-portfolio-demo-signing-key-change-before-deploy-2026}
+      JwtOptions__Issuer: ChatService
+      JwtOptions__Audience: ChatService
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__UserName: ${RABBITMQ_USER:-demo}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-portfolio-local-only}
+    volumes: [chat-uploads:/app/uploads]
+    depends_on:
+      postgres: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+volumes:
+  chat-data:
+  chat-uploads:
