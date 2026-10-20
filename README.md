@@ -81,6 +81,14 @@ curl http://localhost:8030/api/dev/token \
 
 События SignalR включают `MessageReceived`, `MessageEdited`, `MessageDeleted`, `MessageRead`, `PresenceChanged`, `UserTyping` и `UserStoppedTyping`. После подключения клиент вызывает `JoinConversation` с ID разговора. Development-страница использует встроенный JSON-протокол SignalR через WebSocket, без внешнего CDN.
 
+## Демонстрационные тест-кейсы
+
+На главной странице доступны **9 выбираемых кейсов**: доставка, редактирование, прочтение, JWT, посторонний пользователь, другой tenant, вложения, закрепление и уведомление RabbitMQ. Страница выполняет реальные запросы и показывает PASS/FAIL с журналом шагов.
+
+В Swagger есть **Authorize**, примеры JWT для Alex/Sam/Visitor/OtherTenant и готовые тела сообщений. Подробные шаги: [TEST-CASES.ru.md](docs/TEST-CASES.ru.md). Наблюдение уведомлений через брокер: [RABBITMQ.ru.md](docs/RABBITMQ.ru.md). Management UI RabbitMQ доступен на http://localhost:15673.
+
+![Выбор и запуск кейса](docs/images/demo-cases.png)
+
 ## Проверки
 
 Для модульных тестов нужен .NET 10 SDK:

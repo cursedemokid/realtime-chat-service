@@ -107,6 +107,23 @@ try {
   const history = await api(`/api/Chat/${room}/messages`, { token: sam });
   assert.ok(JSON.stringify(history).includes(file.fileId));
   console.log('PASS: private uploads, participant downloads, trusted metadata and reloaded attachment history');
+
+  const catalog = await api('/api/demo/cases');
+  assert.equal(catalog.cases.length, 9);
+  const topology = await api('/api/demo/rabbitmq/prepare', { method: 'POST' });
+  assert.equal(topology.queue, 'demo.chat.notifications');
+  const notified = await api(`/api/Chat/${room}/messages`, { token: alex, body: { text: 'RabbitMQ notification ' + crypto.randomUUID() } });
+  await waitUntil(async () => {
+    const event = await api('/api/demo/rabbitmq/consume', { method: 'POST' });
+    if (!event.hasMessage) return false;
+    const payload = JSON.parse(event.body.Payload ?? event.body.payload);
+    return payload.messageId === notified.id;
+  }, 'notification.requested through RabbitMQ');
+  const swagger = await api('/swagger/v1/swagger.json');
+  assert.equal(swagger.components.securitySchemes.Bearer.scheme, 'bearer');
+  const tokenExamples = swagger.paths['/api/dev/token'].post.requestBody.content['application/json'].examples;
+  assert.deepEqual(Object.keys(tokenExamples).sort(), ['Alex', 'OtherTenant', 'Sam', 'Visitor']);
+  console.log('PASS: nine demo cases, Swagger JWT examples and a real RabbitMQ notification');
 } finally {
   for (const socket of sockets) socket.close();
 }

@@ -18,6 +18,9 @@
 | Метаданные вложения | Имя и URL определяются сервером |
 | Перезагрузка истории с вложениями | Успешно |
 | Браузерная демонстрация и ширина 390 px | Успешно |
+| Выбор CHAT-001 … CHAT-009 в Chromium | Все 9 кейсов PASS, настоящие HTTP/WebSocket-запросы |
+| RabbitMQ notification.requested | Получено событие с ID отправленного сообщения |
+| Swagger Examples и Bearer Authorize | 4 участника, тела сообщений и Pin/Unpin |
 
 Команды воспроизведения: `CHAT_DB_TEST=... dotnet test RealtimeChat.sln -c Release`, `docker compose up --build -d`, `node scripts/smoke.mjs`.
 

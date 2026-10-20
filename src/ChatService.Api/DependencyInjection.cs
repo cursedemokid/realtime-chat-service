@@ -50,7 +50,20 @@ public static class DependencyInjection
             });
 
         services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen();
+        services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new() { Title = "Realtime Chat · тест-кейсы", Version = "v1" });
+            options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.OpenApiSecurityScheme
+            {
+                Type = Microsoft.OpenApi.SecuritySchemeType.Http, Scheme = "bearer", BearerFormat = "JWT",
+                Description = "Получите JWT через POST /api/dev/token. Вставьте token без префикса Bearer."
+            });
+            options.AddSecurityRequirement(document => new Microsoft.OpenApi.OpenApiSecurityRequirement
+            {
+                [new Microsoft.OpenApi.OpenApiSecuritySchemeReference("Bearer", document)] = []
+            });
+            options.OperationFilter<ChatService.Api.Demo.ChatExamplesOperationFilter>();
+        });
 
         services.AddPortfolioAuthentication(configuration);
 

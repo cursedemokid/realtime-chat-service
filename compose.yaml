@@ -13,6 +13,7 @@ services:
       retries: 30
   rabbitmq:
     image: rabbitmq:4-management
+    ports: ["127.0.0.1:15673:15672"]
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-demo}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-portfolio-local-only}
