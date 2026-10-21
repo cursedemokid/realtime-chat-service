@@ -17,7 +17,7 @@ public class JoinConversationHandler : IRequestHandler<JoinConversationCommand>
 
     public async Task Handle(JoinConversationCommand request, CancellationToken cancellationToken)
     {
-        var conversation = await _conversationRepository.GetByIdAsync(ConversationId.From(request.ConversationId), cancellationToken);
+        var conversation = await _conversationRepository.GetByIdForAuthorizationAsync(ConversationId.From(request.ConversationId), cancellationToken);
         if (conversation == null) throw new NotFoundException(nameof(conversation), request.ConversationId);
 
         if (!conversation.IsParticipant(request.ParticipantId, request.ParticipantType))

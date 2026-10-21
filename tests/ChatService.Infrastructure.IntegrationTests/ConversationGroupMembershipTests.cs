@@ -49,8 +49,9 @@ public class ConversationGroupMembershipTests
         var room = Guid.NewGuid(); var user = new ChatUserId("tenant-a", 42);
         var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var finish = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var checks = 0;
         var join = memberships.JoinAsync(room, user, ParticipantType.Customer, "racing", async () =>
-        { entered.SetResult(); await finish.Task; });
+        { if (++checks == 1) return; entered.SetResult(); await finish.Task; });
         await entered.Task;
         var removal = memberships.RevokeAsync(room, user, ParticipantType.Customer);
         finish.SetResult();

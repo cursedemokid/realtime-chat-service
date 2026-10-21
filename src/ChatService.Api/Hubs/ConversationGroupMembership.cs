@@ -20,6 +20,8 @@ public sealed class ConversationGroupMembership(IGroupManager groups)
     public async Task JoinAsync(Guid conversation, ChatUserId user, ParticipantType type,
         string connection, Func<Task> authorize, CancellationToken ct = default)
     {
+        // Reject arbitrary room IDs before retaining any per-room state.
+        await authorize();
         var room = _rooms.GetOrAdd(conversation, _ => new Room());
         await room.Gate.WaitAsync(ct);
         try

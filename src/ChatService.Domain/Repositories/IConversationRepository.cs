@@ -6,6 +6,8 @@ namespace ChatService.Domain.Repositories;
 
 public interface IConversationRepository
 {
+    Task<Conversation?> GetByIdForAuthorizationAsync(ConversationId id, CancellationToken cancellationToken = default);
+
     Task<Conversation?> GetByIdAsync(ConversationId id, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Conversation>> GetByParticipantAsync(

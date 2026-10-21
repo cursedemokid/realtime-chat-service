@@ -16,6 +16,11 @@ public class EfConversationRepository : IConversationRepository
         _context = context;
     }
 
+    // Membership must be re-read after a concurrent revocation, not served from the tracker.
+    public Task<Conversation?> GetByIdForAuthorizationAsync(ConversationId id, CancellationToken ct = default)
+        => _context.Conversations.AsNoTracking().Include(c => c.Participants)
+            .FirstOrDefaultAsync(c => c.Id == id, ct);
+
     public async Task<Conversation?> GetByIdAsync(ConversationId id, CancellationToken ct = default)
        => await _context.Conversations.Include(c => c.Participants).FirstOrDefaultAsync(c => c.Id == id, ct);
 
