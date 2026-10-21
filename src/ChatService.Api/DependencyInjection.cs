@@ -37,6 +37,9 @@ public static class DependencyInjection
         services.AddScoped<IAttachmentAccess>(sp => sp.GetRequiredService<LocalFileStorageService>());
         services.AddHostedService<PresenceSweepWorker>();
 
+        services.AddSingleton(sp => new ConversationGroupMembership(
+            sp.GetRequiredService<Microsoft.AspNetCore.SignalR.IHubContext<ChatHub>>().Groups));
+
         services.AddSignalR()
             .AddJsonProtocol(options =>
             {

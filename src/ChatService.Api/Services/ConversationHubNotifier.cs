@@ -10,10 +10,12 @@ namespace ChatService.Api.Services;
 public class ConversationHubNotifier : IConversationRealtimeNotifier
 {
     private readonly IHubContext<ChatHub> _hubContext;
+    private readonly ConversationGroupMembership _memberships;
 
-    public ConversationHubNotifier(IHubContext<ChatHub> hubContext)
+    public ConversationHubNotifier(IHubContext<ChatHub> hubContext, ConversationGroupMembership memberships)
     {
         _hubContext = hubContext;
+        _memberships = memberships;
     }
 
     public Task NotifyParticipantRoleChangedAsync(
@@ -37,15 +39,17 @@ public class ConversationHubNotifier : IConversationRealtimeNotifier
             new { conversationId, participant },
             cancellationToken);
 
-    public Task NotifyParticipantRemovedAsync(
-        Guid conversationId,
-        ChatUserId participantId,
-        ParticipantType participantType,
+    public async Task NotifyParticipantRemovedAsync(
+        Guid conversationId, ChatUserId participantId, ParticipantType participantType,
         CancellationToken cancellationToken = default)
-        => _hubContext.Clients.Group(SignalRGroups.Conversation(conversationId)).SendAsync(
-            "ParticipantRemoved",
-            new { conversationId, participantId = participantId.UserId, participantType },
-            cancellationToken);
+    {
+        await _memberships.RevokeAsync(conversationId, participantId, participantType, cancellationToken);
+        var payload = new { conversationId, participantId = participantId.UserId, participantType };
+        await _hubContext.Clients.Group(SignalRGroups.Conversation(conversationId))
+            .SendAsync("ParticipantRemoved", payload, cancellationToken);
+        await _hubContext.Clients.Group(SignalRGroups.Inbox(participantId, participantType))
+            .SendAsync("ParticipantRemoved", payload, cancellationToken);
+    }
 
     public Task NotifyConversationStatusChangedAsync(
         Guid conversationId,
