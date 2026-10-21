@@ -38,6 +38,8 @@ public class ManageSupportTicketHandler : IRequestHandler<ManageSupportTicketCom
         var ticket = await _ticketRepository.GetByIdAsync(SupportTicketId.From(request.TicketId), cancellationToken);
         if (ticket == null) throw new NotFoundException(nameof(ticket), request.TicketId);
 
+        SupportTicketAuthorization.EnsureCanManage(ticket, request.ActorId, request.ActorType);
+
         var actorUserId = new ChatUserId(request.ActorId.TenantId, request.ActorId.UserId);
 
         switch (request.Action)

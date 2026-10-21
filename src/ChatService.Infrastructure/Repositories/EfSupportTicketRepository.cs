@@ -37,9 +37,10 @@ public class EfSupportTicketRepository : ISupportTicketRepository
         int take,
         CancellationToken ct = default)
     {
-        var query = _context.SupportTickets.AsNoTracking().Include(t => t.History).AsQueryable();
+        var query = _context.SupportTickets.AsNoTracking().Include(t => t.History)
+            .Where(t => t.Initiator.UserId.TenantId == viewerId.TenantId);
         if (viewerType != ParticipantType.Manager)
-            query = query.Where(t => t.Initiator.UserId == viewerId);
+            query = query.Where(t => t.Initiator.UserId == viewerId && t.Initiator.Type == viewerType);
 
         var total = await query.CountAsync(ct);
         var items = await query.OrderByDescending(t => t.OpenedAt)

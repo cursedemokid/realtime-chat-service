@@ -14,6 +14,7 @@ namespace ChatService.Api.Hubs;
 public class ChatHub : Hub
 {
     private readonly IMediator _mediator;
+    private readonly ConversationGroupMembership _memberships;
     private readonly IPresenceService _presenceService;
     private readonly ITypingIndicatorService _typingIndicatorService;
     private readonly IConversationRealtimeNotifier _notifier;
@@ -22,9 +23,10 @@ public class ChatHub : Hub
         IMediator mediator,
         IPresenceService presenceService,
         ITypingIndicatorService typingIndicatorService,
-        IConversationRealtimeNotifier notifier)
+        IConversationRealtimeNotifier notifier, ConversationGroupMembership memberships)
     {
         _mediator = mediator;
+        _memberships = memberships;
         _presenceService = presenceService;
         _typingIndicatorService = typingIndicatorService;
         _notifier = notifier;
@@ -68,6 +70,7 @@ public class ChatHub : Hub
         {
         }
 
+        await _memberships.DisconnectedAsync(Context.ConnectionId);
         await base.OnDisconnectedAsync(exception);
     }
 
@@ -174,13 +177,14 @@ public class ChatHub : Hub
     {
         var userId = await GetCurrentUserIdAsync();
         var userType = GetCurrentUserType();
-        await _mediator.Send(new JoinConversationCommand(conversationId, userId, userType));
-        await Groups.AddToGroupAsync(Context.ConnectionId, SignalRGroups.Conversation(conversationId));
+        await _memberships.JoinAsync(conversationId, userId, userType, Context.ConnectionId,
+            () => _mediator.Send(new JoinConversationCommand(conversationId, userId, userType)),
+            Context.ConnectionAborted);
     }
 
     public async Task LeaveConversation(Guid conversationId)
     {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, SignalRGroups.Conversation(conversationId));
+        await _memberships.LeaveAsync(conversationId, Context.ConnectionId);
     }
 
     public async Task ManageConversation(ManageConversationInput input)

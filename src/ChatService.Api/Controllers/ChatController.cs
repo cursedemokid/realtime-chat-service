@@ -1,3 +1,4 @@
+using ChatService.Application;
 using ChatService.Api.Authentication;
 using ChatService.Application.Commands;
 using ChatService.Application.Dto;
@@ -126,7 +127,7 @@ public class ChatController : ControllerBase
         var ticket = await _supportTickets.GetByIdAsync(SupportTicketId.From(ticketId), ct);
         if (ticket is null) return NotFound();
         var currentId = GetCurrentUserId();
-        if (GetCurrentUserType() != ParticipantType.Manager && ticket.Initiator.UserId != currentId)
+        if (!SupportTicketAuthorization.CanView(ticket, currentId, GetCurrentUserType()))
             return Forbid();
         return Ok(_mapper.Map<SupportTicketDto>(ticket));
     }
